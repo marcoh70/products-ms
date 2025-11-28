@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: products-ms
+  kafka:
+    producer:
+      bootstrap-server:
+        - localhost:9092
+        - localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        delivery:
+          timeout:
+            ms: 120000 # Maximum time to wait for retry timeout
+        linger:
+          ms: 0  # Maximum time to wait to buffering the batch for sending messages
+        request:
+          timeout:
+            ms: 30000 # Maximum time the producer will wait for a broker response after sending a message
+#      retries: 10
+#      properties:
+#        retry:
+#          backoff:
+#            ms: 1000
+
+topics:
+  products: product-created-events-topic

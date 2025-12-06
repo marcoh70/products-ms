@@ -8,7 +8,6 @@ spring:
         - localhost:9094
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all
       properties:
         delivery:
           timeout:
@@ -18,6 +17,19 @@ spring:
         request:
           timeout:
             ms: 30000 # Maximum time the producer will wait for a broker response after sending a message
+        # Explicit config to avoid miss config default idempotence config ----
+        max:
+          in:
+            flight:
+              requests:
+                per:
+                  connection: 5 # kafka producer can send up to 5 batches messages without waiting for acknowledgment this value must to be up to 5 in order to work correctly idempotence
+        acks: all
+        #retries: 2147483647
+        # -------------
+        # Explicity config idempotence in case the above 3 properties do not comply the default config
+        enable:
+          idempotence: true
 #      retries: 10
 #      properties:
 #        retry:
@@ -25,4 +37,5 @@ spring:
 #            ms: 1000
 
 topics:
-  products: product-created-events-topic
+  producer:
+    products: product-created-events-topic

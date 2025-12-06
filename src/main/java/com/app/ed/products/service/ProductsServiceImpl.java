@@ -1,16 +1,16 @@
 package com.app.ed.products.service;
 
+import com.app.ed.core.model.ProductCreatedEvent;
 import com.app.ed.products.exceptions.KafkaSendMessageException;
-import com.app.ed.products.model.ProductCreatedEvent;
 import com.app.ed.products.model.ProductRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductsServiceImpl implements ProductsService{
 
-    @Value("${topics.products}")
+    @Value("${topics.producer.products}")
     private String productTopic;
 
     private final KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate;
@@ -34,8 +34,15 @@ public class ProductsServiceImpl implements ProductsService{
                         .price(productRequest.getPrice())
                         .quantity(productRequest.getQuantity())
                         .build();
+        // Creating the ProducerRecord object to send unique id in headers
+        ProducerRecord<String, ProductCreatedEvent> producerRecord =
+                new ProducerRecord<>(
+                        productTopic,
+                        productCreatedEvent
+                );
+        producerRecord.headers().add("messageId", UUID.randomUUID().toString().getBytes());
         // Sending message async
-        kafkaTemplate.send(productTopic, productId, productCreatedEvent)
+        kafkaTemplate.send(producerRecord)
                 .whenComplete((result, exception) -> {
                     if (exception != null) {
                         log.error("Failed to send message [ topic:{}, error:{} ]", productTopic, exception.getMessage());
